@@ -1,25 +1,18 @@
 // Filename - App.js
 
-// Importing modules
-import React, { useState, useEffect } from "react";
-import { Box, TextField, Container, Paper, Button } from '@mui/material';
+import React, { useState } from "react";
+import { Box, TextField, Container, Paper, Button, CircularProgress } from '@mui/material';
 import "./App.css";
 
 function App() {
-    // State for storing the analysis response
-    const [res, setRes] = useState("");
-    // State for storing text input
+    const [res, setRes] = useState({ message: "", score: 0 });
     const [inputText, setInputText] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
 
-    // Using useEffect for initial data fetching
-    useEffect(() => {
-        fetchData();
-    }, []);
-
-    // Function to fetch data and analyze sentiment
     const fetchData = async (text = "") => {
         try {
             if (text) {
+                setIsLoading(true);
                 const analysisResponse = await fetch("/anal", {
                     method: 'POST',
                     headers: {
@@ -28,19 +21,21 @@ function App() {
                     body: JSON.stringify({ text: text })
                 });
                 const analysisJson = await analysisResponse.json();
-                setRes(analysisJson.Sentiment);
+                setRes(analysisJson);
+                setInputText(""); // Clear input after submission
             }
         } catch (error) {
             console.error("Error fetching data:", error);
+            setRes({ message: "Error analyzing sentiment", score: 0 });
+        } finally {
+            setIsLoading(false);
         }
     };
 
-    // Handle text field changes
     const handleTextChange = (event) => {
         setInputText(event.target.value);
     };
 
-    // Handle form submission
     const handleSubmit = (event) => {
         event.preventDefault();
         if (inputText.trim()) {
@@ -48,11 +43,36 @@ function App() {
         }
     };
 
+    // Helper function to get color based on sentiment score
+    const getSentimentColor = (score) => {
+        if (score > 0.3) {
+          return "#4caf50";
+        } // Green for positive
+        if (score < -0.3) {
+          return "#f44336";
+        } // Red for negative
+        return "#ff9800"; // Orange for neutral
+    };
+
     return (
         <Container maxWidth="sm">
             <Paper elevation={3} sx={{ p: 3, mt: 4 }}>
                 <div className="App">
-                    <p>Sentiment Analysis: {res}</p>
+                    <h2>Sentiment Analysis</h2>
+                    {res.message && (
+                        <Paper 
+                            elevation={1} 
+                            sx={{ 
+                                p: 2, 
+                                mb: 3, 
+                                backgroundColor: getSentimentColor(res.score),
+                                color: 'white'
+                            }}
+                        >
+                            <p style={{ margin: 0 }}>{res.message}</p>
+                            <small>Score: {res.score}</small>
+                        </Paper>
+                    )}
                     <Box
                         component="form"
                         onSubmit={handleSubmit}
@@ -68,19 +88,27 @@ function App() {
                     >
                         <TextField 
                             id="filled-basic" 
-                            label="Type Text" 
+                            label="Enter text to analyze" 
                             variant="filled" 
                             fullWidth
+                            multiline
+                            rows={4}
                             value={inputText}
                             onChange={handleTextChange}
+                            disabled={isLoading}
                         />
                         <Button 
                             variant="contained" 
                             type="submit"
                             fullWidth
+                            disabled={!inputText.trim() || isLoading}
                             sx={{ mt: 2 }}
                         >
-                            Analyze Sentiment
+                            {isLoading ? (
+                                <CircularProgress size={24} color="inherit" />
+                            ) : (
+                                'Analyze Sentiment'
+                            )}
                         </Button>
                     </Box>
                 </div>
