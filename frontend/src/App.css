@@ -36,3 +36,16 @@
     transform: rotate(360deg);
   }
 }
+
+/* New styles for email rewriter */
+.MuiPaper-root {
+  background-color: #ffffff !important;
+}
+
+.MuiTextField-root {
+  background-color: #ffffff;
+}
+
+.MuiSelect-root {
+  background-color: #ffffff;
+}
